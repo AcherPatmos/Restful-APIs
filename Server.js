@@ -4,6 +4,11 @@ const app = express();
 app.use(express.json());
 const port = process.env.PORT || 3000;
 
+app.listen(port, () => {
+    console.log(`Server started on port ${port}`);
+})
+
+
 app.post("/v1/tasks", async (req, res) => {
   const { title, completed } = req.body;
 
@@ -24,7 +29,7 @@ app.get("/tasks", async (req, res) => {
 
 app.get("/tasks/:id", async (req, res) => {
 
-    const { rows } = await db.query("SELECT * FROM tasks WHERE id = ?", [req.params.id]);
+    const [rows] = await db.query("SELECT * FROM tasks WHERE id = ?", [req.params.id]);
     if (rows.length===0) {
         return res.status(404).json({"message": "No tasks found"});
     }
@@ -36,11 +41,12 @@ app.patch("/tasks/:id", (req, res) => {
   res.json({ message: `update task ${req.params.id}` });
 });
 
-app.delete("/tasks/:id", (req, res) => {
-  res.json({ message: `delete task ${req.params.id}` });
+app.delete("/tasks/:id", async (req, res) => {
+
+    const [result]= await db.query("DELETE FROM tasks where id = ?", [req.params.id]);
+    if (result.affectedRows === 0) {
+        return res.status(404).json({"message": "No tasks found"});
+    }
+    res.status(204).send();
 });
 
-
-app.listen(port, () => {
-    console.log(`Server started on port ${port}`);
-})
